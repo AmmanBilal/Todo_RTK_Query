@@ -13,7 +13,7 @@ export const todosApi = createApi({
         //add todo list item
         addTodo: builder.mutation({
             query: (newTodo) => ({
-              url: 'todos',
+              url: 'todos/add',
               method: 'POST',
               body: newTodo,
             }),

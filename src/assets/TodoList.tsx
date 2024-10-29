@@ -1,27 +1,50 @@
-import {useState} from 'react'
+import {useState,useEffect} from 'react'
 import {useFetchTodosQuery,useUpdateTodoMutation,useAddTodoMutation,useDeleteTodoMutation} from '../assets/api/apiSlice'
 
 interface Todo {
     id: number;
-    title: string;
+    todo: string;
     completed: boolean;
+    userId:number;
 }
 const TodoList = () => {
-    const {data: todos=[],error,isLoading}= useFetchTodosQuery([])
-    const [addTodo] = useAddTodoMutation()
+    const {data: todosData={todos:[]},error,isLoading,refetch}= useFetchTodosQuery(undefined)
+    
+    const [addTodo,{data:newData}] = useAddTodoMutation()
     const [updateTodo] = useUpdateTodoMutation()
     const [deleteTodo] = useDeleteTodoMutation()
 
-    const [newTitle,setNewTitle] = useState('')
-
-    const handleAddTodo= async()=>{
-        await addTodo({
-            title:newTitle,
+    const [newTodo,setNewTodo] = useState('')
+    useEffect(()=>{
+            if(newData){
+                console.log(newData)
+                refetch()
+            }
+    },[newData])
+    const handleAddTodo= ()=>{
+        addTodo({
+            title:newTodo,
             completed:false,
+            userId:1
         })
-        setNewTitle('')
+        console.log("add todo")
+        setNewTodo('')
+        
+    }
+    const handleUpdateTodo=(todo:Todo)=>{
+        updateTodo({
+            id:todo.id,
+            todo:todo.todo,
+            completed:!todo.completed,
+            userId:todo.userId
+        })
+        console.log("update todo")
     }
 
+    const handleDeleteTodo=(id:number)=>{
+        deleteTodo(id)
+        console.log("del todo")
+    }
 
   if (isLoading) return <div>Loading...</div>
   if (error) return <div>Error loading todos</div>
@@ -31,19 +54,19 @@ const TodoList = () => {
     <h1>To-do List</h1>
     <input 
     type='text'
-    value={newTitle}
-    onChange={(e)=>setNewTitle(e.target.value)}
-    placeholder='"new to-do'/>
+    value={newTodo}
+    onChange={(e)=>setNewTodo(e.target.value)}
+    placeholder='new to-do'/>
 
         <button onClick={handleAddTodo}>Add</button>
         <ul>
-             {todos.map((todo:Todo) => (
+             {todosData.todos.map((todo:Todo) => (
                 <li key={todo.id}>
-                    {todo.title}
-                    <button onClick={() => updateTodo({ id: todo.id, completed: !todo.completed })}>
-                    {todo.completed ? 'Unmark' : 'Complete'}
+                    {todo.todo}
+                    <button onClick={() => handleUpdateTodo(todo)}>
+                    {todo.completed ? 'inComplete' : 'Complete'}
                     </button>
-                    <button onClick={() => deleteTodo(todo.id)}>Delete</button>
+                    <button onClick={() => handleDeleteTodo(todo.id)}>Delete</button>
                 </li>
                 ))}
 
