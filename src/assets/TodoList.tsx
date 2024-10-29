@@ -8,42 +8,46 @@ interface Todo {
     userId:number;
 }
 const TodoList = () => {
-    const {data: todosData={todos:[]},error,isLoading,refetch}= useFetchTodosQuery(undefined)
+    const {data: todosData={todos:[]},error,isLoading}= useFetchTodosQuery(undefined)
     
-    const [addTodo,{data:newData}] = useAddTodoMutation()
+    const [addTodo] = useAddTodoMutation()
     const [updateTodo] = useUpdateTodoMutation()
     const [deleteTodo] = useDeleteTodoMutation()
 
     const [newTodo,setNewTodo] = useState('')
+    const [todos,setTodos] = useState<Todo[]>(todosData.todos)
     useEffect(()=>{
-            if(newData){
-                console.log(newData)
-                refetch()
-            }
-    },[newData])
-    const handleAddTodo= ()=>{
-        addTodo({
-            title:newTodo,
+            setTodos(todosData.todos)
+    },[todosData])
+
+
+    const handleAddTodo=async ()=>{
+       const result= await addTodo({
+            todo:newTodo,
             completed:false,
             userId:1
         })
-        console.log("add todo")
+        if(result.data){
+            setTodos([...todos,result.data])
+        }
         setNewTodo('')
-        
     }
-    const handleUpdateTodo=(todo:Todo)=>{
-        updateTodo({
-            id:todo.id,
-            todo:todo.todo,
+    const handleUpdateTodo=async(todo:Todo)=>{
+        const updatedTodo={
+            ...todo,
             completed:!todo.completed,
-            userId:todo.userId
-        })
-        console.log("update todo")
+        }
+
+        await updateTodo(updatedTodo)
+
+        setTodos(todos.map(t=>(t.id === todo.id ? updatedTodo:t)))
+    
     }
 
-    const handleDeleteTodo=(id:number)=>{
-        deleteTodo(id)
-        console.log("del todo")
+    const handleDeleteTodo=async(id:number)=>{
+       await deleteTodo(id)
+        
+       setTodos(todos.filter(todo=>todo.id !==id))
     }
 
   if (isLoading) return <div>Loading...</div>
@@ -56,15 +60,16 @@ const TodoList = () => {
     type='text'
     value={newTodo}
     onChange={(e)=>setNewTodo(e.target.value)}
-    placeholder='new to-do'/>
+    placeholder='new to-do'
+    />
 
         <button onClick={handleAddTodo}>Add</button>
         <ul>
-             {todosData.todos.map((todo:Todo) => (
+             {todos.map((todo:Todo) => (
                 <li key={todo.id}>
                     {todo.todo}
                     <button onClick={() => handleUpdateTodo(todo)}>
-                    {todo.completed ? 'inComplete' : 'Complete'}
+                    {todo.completed ? 'Incomplete' : 'Complete'}
                     </button>
                     <button onClick={() => handleDeleteTodo(todo.id)}>Delete</button>
                 </li>
